@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/lib/auth";
 
 export default function AddCarPage() {
-  const [make, setMake] = useState("");
+  const [make, setMake]   = useState("");
   const [model, setModel] = useState("");
-  const [year, setYear] = useState(2020);
+  const [year, setYear]   = useState(2020);
   const [price, setPrice] = useState(100);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -15,20 +16,11 @@ export default function AddCarPage() {
     e.preventDefault();
     setError("");
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${process.env.NEXT_PUBLIC_API_BASE}/api/cars/`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           make,
           model,
@@ -39,12 +31,9 @@ export default function AddCarPage() {
     );
 
     if (!res.ok) {
-      if (res.status === 401) {
-        localStorage.removeItem("accessToken");
-        router.push("/login");
-      } else {
-        setError("Failed to add");
-      }
+      // fetchWithAuth already redirected on 401, so any error here
+      // is likely 400/500 -> show message
+      setError("Failed to add");
       return;
     }
     router.push("/cars");
@@ -58,7 +47,9 @@ export default function AddCarPage() {
       >
         <h1 className="text-2xl font-semibold text-center">Add Car</h1>
 
-        {error && <div className="text-red-600 text-sm text-center">{error}</div>}
+        {error && (
+          <div className="text-red-600 text-sm text-center">{error}</div>
+        )}
 
         <input
           className="w-full border p-2 rounded"
@@ -79,6 +70,8 @@ export default function AddCarPage() {
           className="w-full border p-2 rounded"
           placeholder="Year"
           value={year}
+          min={1900}
+          max={2050}
           onChange={(e) => setYear(Number(e.target.value))}
           required
         />
@@ -87,9 +80,11 @@ export default function AddCarPage() {
           className="w-full border p-2 rounded"
           placeholder="Price / day"
           value={price}
+          min={1}
           onChange={(e) => setPrice(Number(e.target.value))}
           required
         />
+
         <button
           type="submit"
           className="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded"
