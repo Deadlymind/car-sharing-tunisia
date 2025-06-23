@@ -30,7 +30,6 @@ export default function AddCarPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          owner: 2, // demo user id (hard-coded for now)
           make,
           model,
           year,
